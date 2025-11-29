@@ -80,7 +80,6 @@
     let verticalWords = words.filter(w => w.length > 8);
     verticalWords.forEach((word, i) => {
       let col = i * 2;
-      console.log(`Palabra ${word} en vertical: inicio (0,${col}), fin (${word.length-1},${col})`);
       for (let j = 0; j < word.length; j++) {
         grid[j][col] = word[j];
       }
@@ -89,7 +88,6 @@
     let horizontalWords = words.filter(w => w.length <= 8);
     horizontalWords.forEach((word, i) => {
       let row = i * 2;
-      console.log(`Palabra ${word} en horizontal: inicio (${row},0), fin (${row},${word.length-1})`);
       for (let j = 0; j < word.length; j++) {
         grid[row][j] = word[j];
       }
@@ -109,7 +107,6 @@
     const wordList = document.getElementById("wordList");
     const resetButton = document.getElementById("resetButton");
 
-    let isDragging = false;
     let dragCells = [];
 
     function createGrid() {
@@ -121,12 +118,20 @@
           cell.textContent = grid[r][c];
           cell.dataset.row = r;
           cell.dataset.col = c;
-          cell.addEventListener("mousedown", startDrag);
-          cell.addEventListener("mouseover", dragOver);
-          cell.addEventListener("mouseup", endDrag);
-          cell.addEventListener("touchstart", startDrag);
-          cell.addEventListener("touchmove", dragOverTouch);
-          cell.addEventListener("touchend", endDrag);
+
+          if (/Mobi|Android/i.test(navigator.userAgent)) {
+            // En móviles: selección por tap
+            cell.addEventListener("click", () => {
+              highlightCell(cell);
+              checkWord();
+            });
+          } else {
+            // En computador: selección por arrastre
+            cell.addEventListener("mousedown", startDrag);
+            cell.addEventListener("mouseover", dragOver);
+            cell.addEventListener("mouseup", endDrag);
+          }
+
           wordSearch.appendChild(cell);
         }
       }
@@ -143,23 +148,15 @@
     }
 
     function startDrag(e) {
-      isDragging = true;
       dragCells = [];
       highlightCell(e.target);
     }
 
     function dragOver(e) {
-      if (isDragging) highlightCell(e.target);
-    }
-
-    function dragOverTouch(e) {
-      const touch = e.touches[0];
-      const element = document.elementFromPoint(touch.clientX, touch.clientY);
-      if (element && element.classList.contains("cell")) highlightCell(element);
+      highlightCell(e.target);
     }
 
     function endDrag() {
-      isDragging = false;
       checkWord();
       dragCells = [];
     }
@@ -175,14 +172,13 @@
     function checkWord() {
       const selectedText = dragCells.map(c => c.textContent).join('');
       words.forEach(word => {
-        if (selectedText === word || selectedText === word.split('').reverse().join('')) {
+        if (selectedText.includes(word) || selectedText.includes(word.split('').reverse().join(''))) {
           dragCells.forEach(c => {
             c.classList.remove("highlight");
             c.classList.add("found");
           });
           document.getElementById("word-" + word).style.textDecoration = "line-through";
-        } else {
-          dragCells.forEach(c => c.classList.remove("highlight"));
+          dragCells = [];
         }
       });
     }
@@ -197,3 +193,4 @@
   </script>
 </body>
 </html>
+
