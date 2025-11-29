@@ -12,32 +12,25 @@
       padding: 20px;
       text-align: center;
     }
-    h1 {
-      color: #333;
-    }
+    h1 { color: #333; }
     #wordSearch {
       display: grid;
       grid-template-columns: repeat(24, 30px);
       grid-gap: 2px;
       justify-content: center;
       margin-bottom: 20px;
+      user-select: none;
     }
     .cell {
-      width: 30px;
-      height: 30px;
+      width: 30px; height: 30px;
       background-color: #fff;
       border: 1px solid #ccc;
       line-height: 30px;
       text-align: center;
       cursor: pointer;
-      user-select: none;
     }
-    .selected {
-      background-color: #add8e6;
-    }
-    .found {
-      background-color: #90ee90;
-    }
+    .highlight { background-color: #add8e6; }
+    .found { background-color: #90ee90; }
     #wordList {
       margin-top: 20px;
       text-align: left;
@@ -45,27 +38,16 @@
       margin-left: auto;
       margin-right: auto;
     }
-    #wordList li {
-      font-size: 16px;
-      margin: 5px 0;
-    }
+    #wordList li { font-size: 16px; margin: 5px 0; }
     #resetButton {
-      margin-top: 20px;
-      padding: 10px 20px;
-      font-size: 16px;
-      background-color: #ff6666;
-      color: white;
-      border: none;
-      border-radius: 5px;
+      margin-top: 20px; padding: 10px 20px;
+      font-size: 16px; background-color: #ff6666;
+      color: white; border: none; border-radius: 5px;
       cursor: pointer;
     }
-    #resetButton:hover {
-      background-color: #cc0000;
-    }
+    #resetButton:hover { background-color: #cc0000; }
     @media (max-width: 600px) {
-      #wordSearch {
-        grid-template-columns: repeat(12, 30px);
-      }
+      #wordSearch { grid-template-columns: repeat(12, 30px); }
     }
   </style>
 </head>
@@ -102,10 +84,10 @@ ZDFKSXEDAEQIETCBLNSXVFCY
 RDVWPOCALLENHCVAWRBODOOD`.replace(/\n/g, '');
 
     const words = [
-      "HIDROTERMAL", "ELLACO", "HIERRO", "ALBITIZACION", "APATITO",
-      "CLINOZOISITA", "MAGNETITA", "HEMATITA", "ACTINOLITA", "SUBDUCCION",
-      "ARCOVOLCANICO", "ALTERACION", "PROPILITICA", "CALCOSODICA",
-      "METASOMATISMO", "BRECHAS"
+      "HIDROTERMAL","ELLACO","HIERRO","ALBITIZACION","APATITO",
+      "CLINOZOISITA","MAGNETITA","HEMATITA","ACTINOLITA","SUBDUCCION",
+      "ARCOVOLCANICO","ALTERACION","PROPILITICA","CALCOSODICA",
+      "METASOMATISMO","BRECHAS"
     ];
 
     const gridSize = 24;
@@ -113,7 +95,8 @@ RDVWPOCALLENHCVAWRBODOOD`.replace(/\n/g, '');
     const wordList = document.getElementById("wordList");
     const resetButton = document.getElementById("resetButton");
 
-    let selectedCells = [];
+    let isDragging = false;
+    let dragCells = [];
 
     function createGrid() {
       wordSearch.innerHTML = '';
@@ -122,17 +105,12 @@ RDVWPOCALLENHCVAWRBODOOD`.replace(/\n/g, '');
         cell.className = "cell";
         cell.textContent = gridText[i];
         cell.dataset.index = i;
-        cell.addEventListener("click", () => {
-          if (cell.classList.contains("found")) return;
-          cell.classList.toggle("selected");
-          const idx = selectedCells.indexOf(cell);
-          if (idx > -1) {
-            selectedCells.splice(idx, 1);
-          } else {
-            selectedCells.push(cell);
-          }
-          checkSelection();
-        });
+        cell.addEventListener("mousedown", startDrag);
+        cell.addEventListener("mouseover", dragOver);
+        cell.addEventListener("mouseup", endDrag);
+        cell.addEventListener("touchstart", startDrag);
+        cell.addEventListener("touchmove", dragOverTouch);
+        cell.addEventListener("touchend", endDrag);
         wordSearch.appendChild(cell);
       }
     }
@@ -147,22 +125,52 @@ RDVWPOCALLENHCVAWRBODOOD`.replace(/\n/g, '');
       });
     }
 
-    function checkSelection() {
-      const selectedText = selectedCells.map(c => c.textContent).join('');
+    function startDrag(e) {
+      isDragging = true;
+      dragCells = [];
+      highlightCell(e.target);
+    }
+
+    function dragOver(e) {
+      if (isDragging) highlightCell(e.target);
+    }
+
+    function dragOverTouch(e) {
+      const touch = e.touches[0];
+      const element = document.elementFromPoint(touch.clientX, touch.clientY);
+      if (element && element.classList.contains("cell")) highlightCell(element);
+    }
+
+    function endDrag() {
+      isDragging = false;
+      checkWord();
+      dragCells = [];
+    }
+
+    function highlightCell(cell) {
+      if (!cell.classList.contains("cell")) return;
+      if (!dragCells.includes(cell)) {
+        cell.classList.add("highlight");
+        dragCells.push(cell);
+      }
+    }
+
+    function checkWord() {
+      const selectedText = dragCells.map(c => c.textContent).join('');
       words.forEach(word => {
         if (selectedText.includes(word)) {
-          selectedCells.forEach(c => {
-            c.classList.remove("selected");
+          dragCells.forEach(c => {
+            c.classList.remove("highlight");
             c.classList.add("found");
           });
           document.getElementById("word-" + word).style.textDecoration = "line-through";
-          selectedCells = [];
+        } else {
+          dragCells.forEach(c => c.classList.remove("highlight"));
         }
       });
     }
 
     resetButton.addEventListener("click", () => {
-      selectedCells = [];
       createGrid();
       createWordList();
     });
@@ -172,5 +180,3 @@ RDVWPOCALLENHCVAWRBODOOD`.replace(/\n/g, '');
   </script>
 </body>
 </html>
-
-
