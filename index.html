@@ -49,11 +49,12 @@
     #resetButton:hover { background-color: #cc0000; }
     @media (max-width: 600px) {
       #wordSearch {
-        grid-template-columns: repeat(12, minmax(25px, 1fr));
+        grid-template-columns: repeat(12, minmax(30px, 1fr));
       }
       .cell {
-        font-size: 4vw;
-        padding: 5px;
+        font-size: 5vw;
+        height: 40px;
+        line-height: 40px;
       }
     }
   </style>
@@ -75,10 +76,11 @@
     const gridSize = 24;
     let grid = Array.from({length: gridSize}, () => Array(gridSize).fill(''));
 
-    // Colocar palabras en la cuadrícula (internamente, algunas en vertical y otras en horizontal)
+    // Colocar palabras largas en vertical y cortas en horizontal
     let verticalWords = words.filter(w => w.length > 8);
     verticalWords.forEach((word, i) => {
       let col = i * 2;
+      console.log(`Palabra ${word} en vertical: inicio (0,${col}), fin (${word.length-1},${col})`);
       for (let j = 0; j < word.length; j++) {
         grid[j][col] = word[j];
       }
@@ -87,6 +89,7 @@
     let horizontalWords = words.filter(w => w.length <= 8);
     horizontalWords.forEach((word, i) => {
       let row = i * 2;
+      console.log(`Palabra ${word} en horizontal: inicio (${row},0), fin (${row},${word.length-1})`);
       for (let j = 0; j < word.length; j++) {
         grid[row][j] = word[j];
       }
@@ -194,4 +197,3 @@
   </script>
 </body>
 </html>
-
