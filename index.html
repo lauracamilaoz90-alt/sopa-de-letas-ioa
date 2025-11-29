@@ -60,13 +60,11 @@
 </head>
 <body>
   <h1>Sopa de Letras IOA</h1>
-  <p>👉 Desliza el dedo o el mouse para subrayar palabras. Las largas están en vertical y las cortas en horizontal.</p>
   <div id="wordSearch"></div>
   <ul id="wordList"></ul>
   <button id="resetButton">Reiniciar</button>
 
   <script>
-    // Palabras largas en vertical, cortas en horizontal
     const words = [
       "HIDROTERMAL","ELLACO","HIERRO","ALBITIZACION","APATITO",
       "CLINOZOISITA","MAGNETITA","HEMATITA","ACTINOLITA","SUBDUCCION",
@@ -74,23 +72,21 @@
       "METASOMATISMO","BRECHAS"
     ];
 
-    // Generar cuadrícula vacía
     const gridSize = 24;
     let grid = Array.from({length: gridSize}, () => Array(gridSize).fill(''));
 
-    // Colocar palabras largas en vertical
+    // Colocar palabras en la cuadrícula (internamente, algunas en vertical y otras en horizontal)
     let verticalWords = words.filter(w => w.length > 8);
     verticalWords.forEach((word, i) => {
-      let col = i * 2; // separación entre columnas
+      let col = i * 2;
       for (let j = 0; j < word.length; j++) {
         grid[j][col] = word[j];
       }
     });
 
-    // Colocar palabras cortas en horizontal
     let horizontalWords = words.filter(w => w.length <= 8);
     horizontalWords.forEach((word, i) => {
-      let row = i * 2; // separación entre filas
+      let row = i * 2;
       for (let j = 0; j < word.length; j++) {
         grid[row][j] = word[j];
       }
