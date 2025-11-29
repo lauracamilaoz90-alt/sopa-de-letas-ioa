@@ -9,25 +9,26 @@
       font-family: 'Segoe UI', sans-serif;
       background-color: #f4f4f4;
       margin: 0;
-      padding: 20px;
+      padding: 10px;
       text-align: center;
     }
     h1 { color: #333; }
     #wordSearch {
       display: grid;
-      grid-template-columns: repeat(24, 30px);
+      grid-template-columns: repeat(24, minmax(20px, 1fr));
       grid-gap: 2px;
       justify-content: center;
       margin-bottom: 20px;
       user-select: none;
     }
     .cell {
-      width: 30px; height: 30px;
       background-color: #fff;
       border: 1px solid #ccc;
-      line-height: 30px;
       text-align: center;
       cursor: pointer;
+      user-select: none;
+      font-size: 2vw;   /* tamaño relativo al ancho de pantalla */
+      line-height: 1.5;
     }
     .highlight { background-color: #add8e6; }
     .found { background-color: #90ee90; }
@@ -47,7 +48,13 @@
     }
     #resetButton:hover { background-color: #cc0000; }
     @media (max-width: 600px) {
-      #wordSearch { grid-template-columns: repeat(12, 30px); }
+      #wordSearch {
+        grid-template-columns: repeat(12, minmax(25px, 1fr));
+      }
+      .cell {
+        font-size: 4vw;   /* letras más grandes en móviles */
+        padding: 5px;
+      }
     }
   </style>
 </head>
@@ -90,7 +97,6 @@ RDVWPOCALLENHCVAWRBODOOD`.replace(/\n/g, '');
       "METASOMATISMO","BRECHAS"
     ];
 
-    const gridSize = 24;
     const wordSearch = document.getElementById("wordSearch");
     const wordList = document.getElementById("wordList");
     const resetButton = document.getElementById("resetButton");
