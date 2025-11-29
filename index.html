@@ -34,3 +34,167 @@
 
 </body>
 </html>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<title>Sopa de Letras IOA</title>
+<style>
+    body { font-family: Arial; background: #f7f7f7; text-align: center; padding: 20px; }
+    table { margin: auto; border-collapse: collapse; }
+    td {
+        width: 32px; height: 32px;
+        border: 1px solid #aaa;
+        font-size: 20px;
+        text-align: center;
+        cursor: pointer;
+        background: white;
+        user-select: none;
+    }
+    td.selected {
+        background: #ffc400;
+    }
+    td.found {
+        background: #5cb85c;
+        color: white;
+    }
+    #words {
+        margin-top: 20px;
+        font-size: 18px;
+        text-align: left;
+        width: 350px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+    .found-word {
+        color: green;
+        font-weight: bold;
+        text-decoration: line-through;
+    }
+</style>
+</head>
+<body>
+
+<h1>Sopa de Letras – IOA</h1>
+<p>Toca y arrastra para seleccionar letras. Cuando encuentres una palabra, se marcará automáticamente.</p>
+
+<div id="words">
+<b>Palabras a encontrar:</b><br>
+hidrotermal<br>
+hierro<br>
+apatito<br>
+magnetita<br>
+hematita<br>
+actinolita<br>
+subduccion<br>
+arcovolcanico<br>
+alteracion<br>
+propilitica<br>
+sodicocalcica<br>
+metasomatismo<br>
+brechas<br>
+</div>
+
+<br>
+
+<table id="grid">
+<!-- La matriz -->
+</table>
+
+<script>
+// =============================
+// MATRIZ DE LA SOPA DE LETRAS
+// =============================
+const puzzle = [
+"HTEAMITAQZPLOSU",
+"ACTINOLITARXEMT",
+"MAGNETITAPORYIC",
+"PROPILITICAZFBR",
+"SODICO CALCICAGU".replace(" ", ""),
+"ALTERACIONRPKOX",
+"BRECHASUDWJHLAN",
+"SUBDUCCIONTEPLA",
+"ARCOVOLCANICOSD"
+];
+
+const words = [
+"hidrotermal","hierro","apatito","magnetita","hematita",
+"actinolita","subduccion","arcovolcanico","alteracion",
+"propilitica","sodicocalcica","metasomatismo","brechas"
+];
+
+// =============================
+// CREAR TABLA
+// =============================
+let table = document.getElementById("grid");
+let selected = [];
+
+puzzle.forEach((row, i) => {
+    let tr = document.createElement("tr");
+    row.split("").forEach((letter, j) => {
+        let td = document.createElement("td");
+        td.textContent = letter;
+        td.dataset.row = i;
+        td.dataset.col = j;
+
+        td.addEventListener("mousedown", select);
+        td.addEventListener("mouseover", drag);
+        document.addEventListener("mouseup", checkWord);
+
+        tr.appendChild(td);
+    });
+    table.appendChild(tr);
+});
+
+let isDragging = false;
+
+// =============================
+// SELECCIÓN DE LETRAS
+// =============================
+function select(e){
+    clearSelection();
+    isDragging = true;
+    e.target.classList.add("selected");
+    selected.push(e.target);
+}
+
+function drag(e){
+    if(isDragging && e.target.tagName === "TD"){
+        e.target.classList.add("selected");
+        selected.push(e.target);
+    }
+}
+
+function clearSelection(){
+    document.querySelectorAll(".selected").forEach(td => td.classList.remove("selected"));
+    selected = [];
+}
+
+// =============================
+// VALIDAR PALABRA
+// =============================
+function checkWord(){
+    if(!isDragging) return;
+    isDragging = false;
+
+    const formed = selected.map(td => td.textContent).join("");
+
+    // Buscar palabra normal o invertida
+    for(let w of words){
+        if(formed.toLowerCase() === w || formed.toLowerCase() === w.split("").reverse().join("")){
+            markFound(w);
+            selected.forEach(td => td.classList.add("found"));
+        }
+    }
+    clearSelection();
+}
+
+function markFound(word){
+    let list = document.querySelector('#words').innerHTML;
+    list = list.replace(word, `<span class="found-word">${word}</span>`);
+    document.querySelector('#words').innerHTML = list;
+}
+</script>
+
+</body>
+</html>
