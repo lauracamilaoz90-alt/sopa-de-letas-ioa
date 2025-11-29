@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -107,6 +108,7 @@
     const wordList = document.getElementById("wordList");
     const resetButton = document.getElementById("resetButton");
 
+    let isDragging = false;
     let dragCells = [];
 
     function createGrid() {
@@ -123,7 +125,7 @@
             // En móviles: selección por tap
             cell.addEventListener("click", () => {
               highlightCell(cell);
-              checkWord();
+              checkWordSequence();
             });
           } else {
             // En computador: selección por arrastre
@@ -148,16 +150,20 @@
     }
 
     function startDrag(e) {
+      isDragging = true;
       dragCells = [];
       highlightCell(e.target);
     }
 
     function dragOver(e) {
-      highlightCell(e.target);
+      if (isDragging) highlightCell(e.target);
     }
 
     function endDrag() {
-      checkWord();
+      isDragging = false;
+      if (dragCells.length > 1) {
+        checkWordSequence();
+      }
       dragCells = [];
     }
 
@@ -169,16 +175,26 @@
       }
     }
 
-    function checkWord() {
+    function checkWordSequence() {
+      // Ordenar las celdas por fila y columna
+      dragCells.sort((a, b) => {
+        if (a.dataset.row === b.dataset.row) {
+          return a.dataset.col - b.dataset.col;
+        }
+        return a.dataset.row - b.dataset.row;
+      });
+
       const selectedText = dragCells.map(c => c.textContent).join('');
+
       words.forEach(word => {
-        if (selectedText.includes(word) || selectedText.includes(word.split('').reverse().join(''))) {
+        if (selectedText === word || selectedText === word.split('').reverse().join('')) {
           dragCells.forEach(c => {
             c.classList.remove("highlight");
             c.classList.add("found");
           });
           document.getElementById("word-" + word).style.textDecoration = "line-through";
-          dragCells = [];
+        } else {
+          dragCells.forEach(c => c.classList.remove("highlight"));
         }
       });
     }
