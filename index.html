@@ -60,42 +60,51 @@
 </head>
 <body>
   <h1>Sopa de Letras IOA</h1>
+  <p>👉 Desliza el dedo o el mouse para subrayar palabras. Las largas están en vertical y las cortas en horizontal.</p>
   <div id="wordSearch"></div>
   <ul id="wordList"></ul>
   <button id="resetButton">Reiniciar</button>
 
   <script>
-    const gridText = `OMSJWFYXTNABRGEDRQNAPNKX
-JEDUNOVWHLOPRLIEAUVDIPFR
-AUVNBUKDZJGIAERRCDORNMDE
-EWNMJDBAECAQCSCTKVVQZQNK
-VGCWPIUDMUNVCAAHCQAHIMHH
-QGLSYUJCTDHNYNZHATBBLFVO
-ZKIPPIHSCBSLARUIISCYAFKQ
-EMNWRJLYHIXRCRLTTBBJJSYA
-WNOAOGXEXNOVHRAXKIJRZMPO
-HAZMPADUEGLNXMMKIOBIDEWV
-GNOWIALGHNCRECROXSBLBTKF
-PTIHLZTTRNLHODEEMVQNAAAT
-JWSYILVIETHIMVTXIPMBYSRE
-PPIBTQQJTROHKXOPCDDQDOCU
-MDTAIAATYOAVSARPMCEBUMOK
-SAAOCBXTZLRCQVDVWIBNQAVD
-GLGVAEZNIBEUIBIERFDSGTOS
-XZLNZDOULBGFOHZJOIFKILU
-ZYNMEQXOCWOOSMNJWYLPCSCM
-UZLUSTLXRNFNHQDNUVAIWMAA
-BMQQGSIXCRACIDOSOCLACONR
-ELMVUOJTTVELWTNTFZJRZRIR
-ZDFKSXEDAEQIETCBLNSXVFCY
-RDVWPOCALLENHCVAWRBODOOD`.replace(/\n/g, '');
-
+    // Palabras largas en vertical, cortas en horizontal
     const words = [
       "HIDROTERMAL","ELLACO","HIERRO","ALBITIZACION","APATITO",
       "CLINOZOISITA","MAGNETITA","HEMATITA","ACTINOLITA","SUBDUCCION",
       "ARCOVOLCANICO","ALTERACION","PROPILITICA","CALCOSODICA",
       "METASOMATISMO","BRECHAS"
     ];
+
+    // Generar cuadrícula vacía
+    const gridSize = 24;
+    let grid = Array.from({length: gridSize}, () => Array(gridSize).fill(''));
+
+    // Colocar palabras largas en vertical
+    let verticalWords = words.filter(w => w.length > 8);
+    verticalWords.forEach((word, i) => {
+      let col = i * 2; // separación entre columnas
+      for (let j = 0; j < word.length; j++) {
+        grid[j][col] = word[j];
+      }
+    });
+
+    // Colocar palabras cortas en horizontal
+    let horizontalWords = words.filter(w => w.length <= 8);
+    horizontalWords.forEach((word, i) => {
+      let row = i * 2; // separación entre filas
+      for (let j = 0; j < word.length; j++) {
+        grid[row][j] = word[j];
+      }
+    });
+
+    // Rellenar espacios vacíos con letras aleatorias
+    const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    for (let r = 0; r < gridSize; r++) {
+      for (let c = 0; c < gridSize; c++) {
+        if (grid[r][c] === '') {
+          grid[r][c] = alphabet[Math.floor(Math.random() * alphabet.length)];
+        }
+      }
+    }
 
     const wordSearch = document.getElementById("wordSearch");
     const wordList = document.getElementById("wordList");
@@ -106,18 +115,21 @@ RDVWPOCALLENHCVAWRBODOOD`.replace(/\n/g, '');
 
     function createGrid() {
       wordSearch.innerHTML = '';
-      for (let i = 0; i < gridText.length; i++) {
-        const cell = document.createElement("div");
-        cell.className = "cell";
-        cell.textContent = gridText[i];
-        cell.dataset.index = i;
-        cell.addEventListener("mousedown", startDrag);
-        cell.addEventListener("mouseover", dragOver);
-        cell.addEventListener("mouseup", endDrag);
-        cell.addEventListener("touchstart", startDrag);
-        cell.addEventListener("touchmove", dragOverTouch);
-        cell.addEventListener("touchend", endDrag);
-        wordSearch.appendChild(cell);
+      for (let r = 0; r < gridSize; r++) {
+        for (let c = 0; c < gridSize; c++) {
+          const cell = document.createElement("div");
+          cell.className = "cell";
+          cell.textContent = grid[r][c];
+          cell.dataset.row = r;
+          cell.dataset.col = c;
+          cell.addEventListener("mousedown", startDrag);
+          cell.addEventListener("mouseover", dragOver);
+          cell.addEventListener("mouseup", endDrag);
+          cell.addEventListener("touchstart", startDrag);
+          cell.addEventListener("touchmove", dragOverTouch);
+          cell.addEventListener("touchend", endDrag);
+          wordSearch.appendChild(cell);
+        }
       }
     }
 
@@ -164,7 +176,7 @@ RDVWPOCALLENHCVAWRBODOOD`.replace(/\n/g, '');
     function checkWord() {
       const selectedText = dragCells.map(c => c.textContent).join('');
       words.forEach(word => {
-        if (selectedText.includes(word)) {
+        if (selectedText === word || selectedText === word.split('').reverse().join('')) {
           dragCells.forEach(c => {
             c.classList.remove("highlight");
             c.classList.add("found");
