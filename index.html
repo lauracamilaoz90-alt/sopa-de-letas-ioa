@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -7,85 +6,103 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
     body {
-      font-family: 'Segoe UI', sans-serif;
-      background-color: #f4f4f4;
       margin: 0;
+      font-family: Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      background: #fafafa;
+    }
+
+    #game-container {
+      width: 100%;
+      max-width: 520px; /* evita que se corte en la derecha */
       padding: 10px;
-      text-align: center;
+      box-sizing: border-box;
+      overflow-x: auto; /* permite desplazamiento horizontal si se necesita */
     }
-    h1 { color: #333; }
-    #wordSearch {
+
+    #grid {
       display: grid;
-      grid-template-columns: repeat(18, minmax(0, 1fr));
-      grid-gap: 2px;
-      justify-content: center;
-      margin-bottom: 20px;
-      user-select: none;
+      grid-template-columns: repeat(17, minmax(0, 1fr));
+      gap: 2px;
+      width: 100%;
+      touch-action: manipulation; /* mejora respuesta táctil */
     }
+
     .cell {
-      background-color: #fff;
-      border: 1px solid #ccc;
+      aspect-ratio: 1 / 1;
+      background: white;
+      border: 1px solid #ddd;
       display: flex;
       align-items: center;
       justify-content: center;
-      width: min(8vw, 40px);
-      height: min(8vw, 40px);
       font-size: min(5vw, 22px);
-      cursor: pointer;
       user-select: none;
+      cursor: pointer;
     }
+
     .highlight { background-color: #add8e6; }
     .found { background-color: #90ee90; }
-    #wordList {
+
+    #word-list {
+      width: 100%;
       margin-top: 20px;
-      text-align: left;
-      max-width: 600px;
-      margin-left: auto;
-      margin-right: auto;
+      text-align: center;
     }
-    #wordList li { font-size: 16px; margin: 5px 0; }
-    #resetButton, #checkButton {
-      margin: 10px 5px; padding: 10px 20px;
-      font-size: 16px; background-color: #ff6666;
-      color: white; border: none; border-radius: 5px;
+
+    .word {
+      font-size: 16px;
+      margin: 5px 0;
+    }
+
+    .found-word {
+      color: green;
+      text-decoration: line-through;
+    }
+
+    #restart {
+      margin-top: 20px;
+      padding: 10px 18px;
+      border: none;
+      background: #007BFF;
+      color: white;
+      font-size: 16px;
+      border-radius: 6px;
       cursor: pointer;
     }
-    #resetButton:hover, #checkButton:hover { background-color: #cc0000; }
   </style>
 </head>
 <body>
   <h1>Sopa de Letras IOA</h1>
-  <div id="wordSearch"></div>
-  <ul id="wordList"></ul>
-  <button id="checkButton">Validar selección</button>
-  <button id="resetButton">Reiniciar</button>
+  <div id="game-container">
+    <div id="grid"></div>
+  </div>
+  <div id="word-list"></div>
+  <button id="restart">Reiniciar</button>
 
   <script>
     const words = [
       "HIDROTERMAL","ELLACO","HIERRO","ALBITIZACION","APATITO",
       "CLINOZOISITA","MAGNETITA","HEMATITA","ACTINOLITA","SUBDUCCION",
       "ARCOVOLCANICO","ALTERACION","PROPILITICA","CALCOSODICA",
-      "METASOMATISMO","BRECHAS"
+      "METASOMATISMO"
     ];
 
-    const gridSize = 18;
+    const gridSize = 17;
     let grid = Array.from({length: gridSize}, () => Array(gridSize).fill(''));
 
     // Colocar palabras alternando horizontal y vertical
     words.forEach((word, i) => {
       if (i % 2 === 0) {
-        // horizontal
         let row = i % gridSize;
-        let startCol = Math.floor((gridSize - word.length) / 2);
-        for (let j = 0; j < word.length && startCol + j < gridSize; j++) {
-          grid[row][startCol + j] = word[j];
+        for (let j = 0; j < word.length && j < gridSize; j++) {
+          grid[row][j] = word[j];
         }
       } else {
-        // vertical
         let col = i % gridSize;
-        let startRow = Math.floor((gridSize - word.length) / 2);
-        for (let j = 0; j < word.length && startRow + j < gridSize; j++) {
-          grid[startRow + j][col] = word[j];
+        for (let j = 0; j < word.length && j < gridSize; j++) {
+          grid[j][col] = word[j];
         }
       }
     });
@@ -100,16 +117,15 @@
       }
     }
 
-    const wordSearch = document.getElementById("wordSearch");
-    const wordList = document.getElementById("wordList");
-    const resetButton = document.getElementById("resetButton");
-    const checkButton = document.getElementById("checkButton");
+    const gridElement = document.getElementById("grid");
+    const wordListElement = document.getElementById("word-list");
+    const restartButton = document.getElementById("restart");
 
     let dragCells = [];
     let isDragging = false;
 
     function createGrid() {
-      wordSearch.innerHTML = '';
+      gridElement.innerHTML = '';
       for (let r = 0; r < gridSize; r++) {
         for (let c = 0; c < gridSize; c++) {
           const cell = document.createElement("div");
@@ -128,18 +144,19 @@
             cell.addEventListener("mouseup", endDrag);
           }
 
-          wordSearch.appendChild(cell);
+          gridElement.appendChild(cell);
         }
       }
     }
 
     function createWordList() {
-      wordList.innerHTML = '';
+      wordListElement.innerHTML = '';
       words.forEach(word => {
-        const li = document.createElement("li");
-        li.textContent = word;
-        li.id = "word-" + word;
-        wordList.appendChild(li);
+        const div = document.createElement("div");
+        div.textContent = word;
+        div.className = "word";
+        div.id = "word-" + word;
+        wordListElement.appendChild(div);
       });
     }
 
@@ -175,7 +192,7 @@
             c.classList.remove("highlight");
             c.classList.add("found");
           });
-          document.getElementById("word-" + word).style.textDecoration = "line-through";
+          document.getElementById("word-" + word).classList.add("found-word");
           found = true;
         }
       });
@@ -185,11 +202,7 @@
       dragCells = [];
     }
 
-    checkButton.addEventListener("click", () => {
-      checkWord();
-    });
-
-    resetButton.addEventListener("click", () => {
+    restartButton.addEventListener("click", () => {
       dragCells = [];
       createGrid();
       createWordList();
@@ -200,3 +213,4 @@
   </script>
 </body>
 </html>
+
