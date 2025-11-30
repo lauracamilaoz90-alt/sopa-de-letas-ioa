@@ -13,25 +13,26 @@
         padding: 20px;
     }
 
-    h1 { font-size: 22px; }
+    h1 { font-size: 24px; }
 
     #grid {
         display: grid;
         margin: 20px auto;
-        gap: 3px;
+        gap: 4px;
         user-select: none;
+        touch-action: none;
     }
 
     .cell {
-        width: 28px;
-        height: 28px;
+        width: 34px;
+        height: 34px;
         background: white;
-        border: 1px solid #aaa;
-        font-size: 18px;
+        border: 1px solid #888;
+        font-size: 20px;
         display: flex;
         justify-content: center;
         align-items: center;
-        touch-action: none;
+        user-select: none;
     }
 
     .selected {
@@ -45,11 +46,12 @@
     }
 
     #words {
-        margin-top: 20px;
+        margin-top: 25px;
         text-align: left;
-        max-width: 300px;
+        max-width: 350px;
         margin-left: auto;
         margin-right: auto;
+        font-size: 18px;
     }
 
     .found {
@@ -59,23 +61,36 @@
     }
 
     button {
-        margin-top: 20px;
-        padding: 10px 20px;
-        font-size: 16px;
+        margin-top: 25px;
+        padding: 12px 24px;
+        font-size: 18px;
+        border-radius: 6px;
     }
 
+    /* ✅ Mejorado para CELULARES */
     @media(max-width:600px){
+
+        h1 { font-size: 20px; }
+
         .cell{
-            width: 24px;
-            height: 24px;
-            font-size: 15px;
+            width: 38px;
+            height: 38px;
+            font-size: 22px;
+        }
+
+        #grid{
+            gap: 2px;
+        }
+
+        #words{
+            font-size: 20px;
         }
     }
 </style>
 </head>
 <body>
 
-<h1>Sopa de Letras — Depósitos IOA</h1>
+<h1>Sopa de Letras – Depósitos IOA</h1>
 
 <div id="grid"></div>
 
@@ -85,6 +100,7 @@
 <button onclick="reiniciar()">Reiniciar</button>
 
 <script>
+// 🔥 Palabras completas
 const words = [
     "HIDROTERMAL","ELLACO","HIERRO","ALBITIZACION","APATITO",
     "CLINOZOISITA","MAGNETITA","HEMATITA","ACTINOLITA",
@@ -92,18 +108,20 @@ const words = [
     "CALCOSODICA","METASOMATISMO"
 ];
 
-const size = 20;
+// 🔥 Tamaño más grande para que nada se corte
+const size = 25;
+
 let grid = [];
 let seleccion = [];
 let seleccionCeldas = [];
 let encontrado = new Set();
 
-// Crear grilla vacía
+// Crear matriz
 function crearMatriz() {
     grid = Array(size).fill().map(()=>Array(size).fill(""));
 }
 
-// Insertar palabras horizontal/vertical
+// Solo horizontal y vertical
 function colocarPalabras() {
     const dirs = [
         [0,1], // horizontal
@@ -114,8 +132,8 @@ function colocarPalabras() {
         let colocado = false;
         while(!colocado){
             let dir = dirs[Math.floor(Math.random()*dirs.length)];
-            let row = Math.floor(Math.random()*size);
-            let col = Math.floor(Math.random()*size);
+            let row = Math.floor(Math.random()*(size - word.length));
+            let col = Math.floor(Math.random()*(size - word.length));
 
             if (cabefit(row,col,dir,word)){
                 for (let i=0;i<word.length;i++){
@@ -128,12 +146,12 @@ function colocarPalabras() {
 }
 
 function cabefit(r,c,d,w){
-    if (r + d[0]*w.length < 0 || r + d[0]*w.length > size) return false;
-    if (c + d[1]*w.length < 0 || c + d[1]*w.length > size) return false;
+    if (r + d[0]*w.length >= size) return false;
+    if (c + d[1]*w.length >= size) return false;
     return true;
 }
 
-// Llenar con letras aleatorias
+// Relleno
 function rellenar() {
     const letras = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
     for (let r=0;r<size;r++){
@@ -144,10 +162,11 @@ function rellenar() {
     }
 }
 
-// Dibujar grilla
+// Dibujar
 function dibujar() {
     const cont = document.getElementById("grid");
-    cont.style.gridTemplateColumns = `repeat(${size}, 28px)`;
+    cont.style.gridTemplateColumns = `repeat(${size}, 34px)`;
+    
     cont.innerHTML="";
 
     for (let r=0;r<size;r++){
@@ -162,7 +181,6 @@ function dibujar() {
             div.addEventListener("mouseover", moveSelect);
             div.addEventListener("mouseup", endSelect);
 
-            // táctil
             div.addEventListener("touchstart", startSelect);
             div.addEventListener("touchmove", moveSelect);
             div.addEventListener("touchend", endSelect);
@@ -172,20 +190,24 @@ function dibujar() {
     }
 }
 
-// Manejo de selección
+// Selección
 let selecting = false;
 
 function startSelect(e){
     e.preventDefault();
+
     selecting = true;
     limpiarSeleccion();
+
     seleccionarCelda(e.target);
 }
 
 function moveSelect(e){
     if (!selecting) return;
+
     const touch = e.touches ? document.elementFromPoint(
-        e.touches[0].clientX, e.touches[0].clientY
+        e.touches[0].clientX,
+        e.touches[0].clientY
     ) : e.target;
 
     if (touch && touch.classList.contains("cell")){
@@ -200,6 +222,7 @@ function endSelect(){
 
 function seleccionarCelda(cell){
     if (seleccionCeldas.includes(cell)) return;
+
     seleccionCeldas.push(cell);
     seleccion.push(cell.textContent);
     cell.classList.add("selected");
@@ -217,10 +240,11 @@ function verificar(){
 
     if (words.includes(palabra) && !encontrado.has(palabra)){
         encontrado.add(palabra);
+
         seleccionCeldas.forEach(c => c.classList.add("correct"));
         document.getElementById(palabra).classList.add("found");
+
     } else {
-        // incorrecto → borrar
         seleccionCeldas.forEach(c => c.classList.remove("selected"));
     }
 
@@ -228,7 +252,7 @@ function verificar(){
     seleccionCeldas = [];
 }
 
-// Mostrar lista de palabras
+// Lista de palabras
 function mostrarPalabras(){
     const cont = document.getElementById("words");
     cont.innerHTML = "";
@@ -237,7 +261,7 @@ function mostrarPalabras(){
     });
 }
 
-// Reiniciar
+// Reinicio
 function reiniciar(){
     encontrado.clear();
     crearTodo();
@@ -256,4 +280,3 @@ crearTodo();
 
 </body>
 </html>
-
