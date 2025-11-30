@@ -15,7 +15,7 @@
     h1 { color: #333; }
     #wordSearch {
       display: grid;
-      grid-template-columns: repeat(18, 35px); /* tablero fijo de 18 columnas */
+      grid-template-columns: repeat(18, 1fr);
       grid-gap: 2px;
       justify-content: center;
       margin-bottom: 20px;
@@ -24,13 +24,13 @@
     .cell {
       background-color: #fff;
       border: 1px solid #ccc;
-      text-align: center;
+      font-size: 4vw;
+      aspect-ratio: 1 / 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       cursor: pointer;
       user-select: none;
-      font-size: 22px;   /* letras grandes */
-      width: 35px;
-      height: 35px;
-      line-height: 35px; /* centra la letra */
     }
     .highlight { background-color: #add8e6; }
     .found { background-color: #90ee90; }
@@ -74,14 +74,16 @@
       if (i % 2 === 0) {
         // horizontal
         let row = i % gridSize;
-        for (let j = 0; j < word.length && j < gridSize; j++) {
-          grid[row][j] = word[j];
+        let startCol = Math.floor((gridSize - word.length) / 2);
+        for (let j = 0; j < word.length && startCol + j < gridSize; j++) {
+          grid[row][startCol + j] = word[j];
         }
       } else {
         // vertical
         let col = i % gridSize;
-        for (let j = 0; j < word.length && j < gridSize; j++) {
-          grid[j][col] = word[j];
+        let startRow = Math.floor((gridSize - word.length) / 2);
+        for (let j = 0; j < word.length && startRow + j < gridSize; j++) {
+          grid[startRow + j][col] = word[j];
         }
       }
     });
@@ -115,12 +117,10 @@
           cell.dataset.col = c;
 
           if (/Mobi|Android/i.test(navigator.userAgent)) {
-            // En móviles: selección por tap
             cell.addEventListener("click", () => {
               highlightCell(cell);
             });
           } else {
-            // En computador: selección por arrastre
             cell.addEventListener("mousedown", startDrag);
             cell.addEventListener("mouseover", dragOver);
             cell.addEventListener("mouseup", endDrag);
