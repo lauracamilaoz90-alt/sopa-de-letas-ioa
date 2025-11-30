@@ -1,201 +1,259 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <title>Sopa de Letras IOA</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <style>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Sopa de Letras IOA</title>
+
+<style>
     body {
-      font-family: 'Segoe UI', sans-serif;
-      background-color: #f4f4f4;
-      margin: 0;
-      padding: 10px;
-      text-align: center;
+        font-family: Arial, sans-serif;
+        text-align: center;
+        background: #f2f2f2;
+        padding: 20px;
     }
-    h1 { color: #333; }
-    #wordSearch {
-      display: grid;
-      grid-template-columns: repeat(18, 1fr);
-      grid-gap: 2px;
-      justify-content: center;
-      margin-bottom: 20px;
-      user-select: none;
+
+    h1 { font-size: 22px; }
+
+    #grid {
+        display: grid;
+        margin: 20px auto;
+        gap: 3px;
+        user-select: none;
     }
+
     .cell {
-      background-color: #fff;
-      border: 1px solid #ccc;
-      font-size: 4vw;
-      aspect-ratio: 1 / 1;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      user-select: none;
+        width: 28px;
+        height: 28px;
+        background: white;
+        border: 1px solid #aaa;
+        font-size: 18px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        touch-action: none;
     }
-    .highlight { background-color: #add8e6; }
-    .found { background-color: #90ee90; }
-    #wordList {
-      margin-top: 20px;
-      text-align: left;
-      max-width: 600px;
-      margin-left: auto;
-      margin-right: auto;
+
+    .selected {
+        background: #7db3ff;
+        color: white;
     }
-    #wordList li { font-size: 16px; margin: 5px 0; }
-    #resetButton, #checkButton {
-      margin: 10px 5px; padding: 10px 20px;
-      font-size: 16px; background-color: #ff6666;
-      color: white; border: none; border-radius: 5px;
-      cursor: pointer;
+
+    .correct {
+        background: #3cb371;
+        color: white;
     }
-    #resetButton:hover, #checkButton:hover { background-color: #cc0000; }
-  </style>
+
+    #words {
+        margin-top: 20px;
+        text-align: left;
+        max-width: 300px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .found {
+        text-decoration: line-through;
+        color: green;
+        font-weight: bold;
+    }
+
+    button {
+        margin-top: 20px;
+        padding: 10px 20px;
+        font-size: 16px;
+    }
+
+    @media(max-width:600px){
+        .cell{
+            width: 24px;
+            height: 24px;
+            font-size: 15px;
+        }
+    }
+</style>
 </head>
 <body>
-  <h1>Sopa de Letras IOA</h1>
-  <div id="wordSearch"></div>
-  <ul id="wordList"></ul>
-  <button id="checkButton">Validar selección</button>
-  <button id="resetButton">Reiniciar</button>
 
-  <script>
-    const words = [
-      "HIDROTERMAL","ELLACO","HIERRO","ALBITIZACION","APATITO",
-      "CLINOZOISITA","MAGNETITA","HEMATITA","ACTINOLITA","SUBDUCCION",
-      "ARCOVOLCANICO","ALTERACION","PROPILITICA","CALCOSODICA",
-      "METASOMATISMO","BRECHAS"
+<h1>Sopa de Letras — Depósitos IOA</h1>
+
+<div id="grid"></div>
+
+<h3>Palabras</h3>
+<div id="words"></div>
+
+<button onclick="reiniciar()">Reiniciar</button>
+
+<script>
+const words = [
+    "HIDROTERMAL","ELLACO","HIERRO","ALBITIZACION","APATITO",
+    "CLINOZOISITA","MAGNETITA","HEMATITA","ACTINOLITA",
+    "SUBDUCCION","ARCOVOLCANICO","ALTERACION","PROPILITICA",
+    "CALCOSODICA","METASOMATISMO"
+];
+
+const size = 20;
+let grid = [];
+let seleccion = [];
+let seleccionCeldas = [];
+let encontrado = new Set();
+
+// Crear grilla vacía
+function crearMatriz() {
+    grid = Array(size).fill().map(()=>Array(size).fill(""));
+}
+
+// Insertar palabras horizontal/vertical
+function colocarPalabras() {
+    const dirs = [
+        [0,1], // horizontal
+        [1,0]  // vertical
     ];
 
-    const gridSize = 18;
-    let grid = Array.from({length: gridSize}, () => Array(gridSize).fill(''));
+    words.forEach(word=>{
+        let colocado = false;
+        while(!colocado){
+            let dir = dirs[Math.floor(Math.random()*dirs.length)];
+            let row = Math.floor(Math.random()*size);
+            let col = Math.floor(Math.random()*size);
 
-    // Colocar palabras alternando horizontal y vertical
-    words.forEach((word, i) => {
-      if (i % 2 === 0) {
-        // horizontal
-        let row = i % gridSize;
-        let startCol = Math.floor((gridSize - word.length) / 2);
-        for (let j = 0; j < word.length && startCol + j < gridSize; j++) {
-          grid[row][startCol + j] = word[j];
+            if (cabefit(row,col,dir,word)){
+                for (let i=0;i<word.length;i++){
+                    grid[row + dir[0]*i][col + dir[1]*i] = word[i];
+                }
+                colocado = true;
+            }
         }
-      } else {
-        // vertical
-        let col = i % gridSize;
-        let startRow = Math.floor((gridSize - word.length) / 2);
-        for (let j = 0; j < word.length && startRow + j < gridSize; j++) {
-          grid[startRow + j][col] = word[j];
-        }
-      }
     });
+}
 
-    // Rellenar espacios vacíos con letras aleatorias
-    const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-    for (let r = 0; r < gridSize; r++) {
-      for (let c = 0; c < gridSize; c++) {
-        if (grid[r][c] === '') {
-          grid[r][c] = alphabet[Math.floor(Math.random() * alphabet.length)];
+function cabefit(r,c,d,w){
+    if (r + d[0]*w.length < 0 || r + d[0]*w.length > size) return false;
+    if (c + d[1]*w.length < 0 || c + d[1]*w.length > size) return false;
+    return true;
+}
+
+// Llenar con letras aleatorias
+function rellenar() {
+    const letras = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    for (let r=0;r<size;r++){
+        for (let c=0;c<size;c++){
+            if (grid[r][c] === "")
+                grid[r][c] = letras[Math.floor(Math.random()*letras.length)];
         }
-      }
     }
+}
 
-    const wordSearch = document.getElementById("wordSearch");
-    const wordList = document.getElementById("wordList");
-    const resetButton = document.getElementById("resetButton");
-    const checkButton = document.getElementById("checkButton");
+// Dibujar grilla
+function dibujar() {
+    const cont = document.getElementById("grid");
+    cont.style.gridTemplateColumns = `repeat(${size}, 28px)`;
+    cont.innerHTML="";
 
-    let dragCells = [];
-    let isDragging = false;
+    for (let r=0;r<size;r++){
+        for (let c=0;c<size;c++){
+            const div = document.createElement("div");
+            div.className="cell";
+            div.textContent=grid[r][c];
+            div.dataset.row=r;
+            div.dataset.col=c;
 
-    function createGrid() {
-      wordSearch.innerHTML = '';
-      for (let r = 0; r < gridSize; r++) {
-        for (let c = 0; c < gridSize; c++) {
-          const cell = document.createElement("div");
-          cell.className = "cell";
-          cell.textContent = grid[r][c];
-          cell.dataset.row = r;
-          cell.dataset.col = c;
+            div.addEventListener("mousedown", startSelect);
+            div.addEventListener("mouseover", moveSelect);
+            div.addEventListener("mouseup", endSelect);
 
-          if (/Mobi|Android/i.test(navigator.userAgent)) {
-            cell.addEventListener("click", () => {
-              highlightCell(cell);
-            });
-          } else {
-            cell.addEventListener("mousedown", startDrag);
-            cell.addEventListener("mouseover", dragOver);
-            cell.addEventListener("mouseup", endDrag);
-          }
+            // táctil
+            div.addEventListener("touchstart", startSelect);
+            div.addEventListener("touchmove", moveSelect);
+            div.addEventListener("touchend", endSelect);
 
-          wordSearch.appendChild(cell);
+            cont.appendChild(div);
         }
-      }
+    }
+}
+
+// Manejo de selección
+let selecting = false;
+
+function startSelect(e){
+    e.preventDefault();
+    selecting = true;
+    limpiarSeleccion();
+    seleccionarCelda(e.target);
+}
+
+function moveSelect(e){
+    if (!selecting) return;
+    const touch = e.touches ? document.elementFromPoint(
+        e.touches[0].clientX, e.touches[0].clientY
+    ) : e.target;
+
+    if (touch && touch.classList.contains("cell")){
+        seleccionarCelda(touch);
+    }
+}
+
+function endSelect(){
+    selecting = false;
+    verificar();
+}
+
+function seleccionarCelda(cell){
+    if (seleccionCeldas.includes(cell)) return;
+    seleccionCeldas.push(cell);
+    seleccion.push(cell.textContent);
+    cell.classList.add("selected");
+}
+
+function limpiarSeleccion(){
+    seleccion = [];
+    seleccionCeldas.forEach(c => c.classList.remove("selected"));
+    seleccionCeldas = [];
+}
+
+// Verificar palabra
+function verificar(){
+    let palabra = seleccion.join("");
+
+    if (words.includes(palabra) && !encontrado.has(palabra)){
+        encontrado.add(palabra);
+        seleccionCeldas.forEach(c => c.classList.add("correct"));
+        document.getElementById(palabra).classList.add("found");
+    } else {
+        // incorrecto → borrar
+        seleccionCeldas.forEach(c => c.classList.remove("selected"));
     }
 
-    function createWordList() {
-      wordList.innerHTML = '';
-      words.forEach(word => {
-        const li = document.createElement("li");
-        li.textContent = word;
-        li.id = "word-" + word;
-        wordList.appendChild(li);
-      });
-    }
+    seleccion = [];
+    seleccionCeldas = [];
+}
 
-    function highlightCell(cell) {
-      if (!cell.classList.contains("cell")) return;
-      if (!dragCells.includes(cell)) {
-        cell.classList.add("highlight");
-        dragCells.push(cell);
-      }
-    }
-
-    function startDrag(e) {
-      isDragging = true;
-      dragCells = [];
-      highlightCell(e.target);
-    }
-
-    function dragOver(e) {
-      if (isDragging) highlightCell(e.target);
-    }
-
-    function endDrag() {
-      isDragging = false;
-      checkWord();
-    }
-
-    function checkWord() {
-      const selectedText = dragCells.map(c => c.textContent).join('');
-      let found = false;
-      words.forEach(word => {
-        if (selectedText === word || selectedText === word.split('').reverse().join('')) {
-          dragCells.forEach(c => {
-            c.classList.remove("highlight");
-            c.classList.add("found");
-          });
-          document.getElementById("word-" + word).style.textDecoration = "line-through";
-          found = true;
-        }
-      });
-      if (!found) {
-        dragCells.forEach(c => c.classList.remove("highlight"));
-      }
-      dragCells = [];
-    }
-
-    checkButton.addEventListener("click", () => {
-      checkWord();
+// Mostrar lista de palabras
+function mostrarPalabras(){
+    const cont = document.getElementById("words");
+    cont.innerHTML = "";
+    words.forEach(w=>{
+        cont.innerHTML += `<div id="${w}">${w}</div>`;
     });
+}
 
-    resetButton.addEventListener("click", () => {
-      dragCells = [];
-      createGrid();
-      createWordList();
-    });
+// Reiniciar
+function reiniciar(){
+    encontrado.clear();
+    crearTodo();
+}
 
-    createGrid();
-    createWordList();
-  </script>
+function crearTodo(){
+    crearMatriz();
+    colocarPalabras();
+    rellenar();
+    dibujar();
+    mostrarPalabras();
+}
+
+crearTodo();
+</script>
+
 </body>
 </html>
 
