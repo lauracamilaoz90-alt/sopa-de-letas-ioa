@@ -15,7 +15,7 @@
     h1 { color: #333; }
     #wordSearch {
       display: grid;
-      grid-template-columns: repeat(12, minmax(30px, 1fr)); /* menos columnas en móvil */
+      grid-template-columns: repeat(15, minmax(25px, 1fr)); /* menos columnas para hacerlo más fácil */
       grid-gap: 2px;
       justify-content: center;
       margin-bottom: 20px;
@@ -27,7 +27,7 @@
       text-align: center;
       cursor: pointer;
       user-select: none;
-      font-size: 5vw;
+      font-size: 4vw;
       height: 40px;
       line-height: 40px;
     }
@@ -65,22 +65,13 @@
       "METASOMATISMO","BRECHAS"
     ];
 
-    const gridSize = 24;
+    const gridSize = 15; // más pequeño para que sea más fácil
     let grid = Array.from({length: gridSize}, () => Array(gridSize).fill(''));
 
-    // Colocar palabras largas en vertical y cortas en horizontal
-    let verticalWords = words.filter(w => w.length > 8);
-    verticalWords.forEach((word, i) => {
-      let col = i * 2;
-      for (let j = 0; j < word.length; j++) {
-        grid[j][col] = word[j];
-      }
-    });
-
-    let horizontalWords = words.filter(w => w.length <= 8);
-    horizontalWords.forEach((word, i) => {
-      let row = i * 2;
-      for (let j = 0; j < word.length; j++) {
+    // Colocar palabras en filas consecutivas para que sean fáciles de encontrar
+    words.forEach((word, i) => {
+      let row = i;
+      for (let j = 0; j < word.length && j < gridSize; j++) {
         grid[row][j] = word[j];
       }
     });
@@ -101,6 +92,7 @@
     const checkButton = document.getElementById("checkButton");
 
     let dragCells = [];
+    let isDragging = false;
 
     function createGrid() {
       wordSearch.innerHTML = '';
@@ -112,10 +104,17 @@
           cell.dataset.row = r;
           cell.dataset.col = c;
 
-          // Selección por tap
-          cell.addEventListener("click", () => {
-            highlightCell(cell);
-          });
+          if (/Mobi|Android/i.test(navigator.userAgent)) {
+            // En móviles: selección por tap
+            cell.addEventListener("click", () => {
+              highlightCell(cell);
+            });
+          } else {
+            // En computador: selección por arrastre
+            cell.addEventListener("mousedown", startDrag);
+            cell.addEventListener("mouseover", dragOver);
+            cell.addEventListener("mouseup", endDrag);
+          }
 
           wordSearch.appendChild(cell);
         }
@@ -140,6 +139,21 @@
       }
     }
 
+    function startDrag(e) {
+      isDragging = true;
+      dragCells = [];
+      highlightCell(e.target);
+    }
+
+    function dragOver(e) {
+      if (isDragging) highlightCell(e.target);
+    }
+
+    function endDrag() {
+      isDragging = false;
+      checkWord();
+    }
+
     function checkWord() {
       const selectedText = dragCells.map(c => c.textContent).join('');
       let found = false;
@@ -154,7 +168,6 @@
         }
       });
       if (!found) {
-        // limpiar selección si no es correcta
         dragCells.forEach(c => c.classList.remove("highlight"));
       }
       dragCells = [];
