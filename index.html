@@ -42,7 +42,7 @@
     }
     #wordList li { font-size: 16px; margin: 5px 0; }
     #resetButton, #checkButton {
-      margin-top: 10px; padding: 10px 20px;
+      margin: 10px 5px; padding: 10px 20px;
       font-size: 16px; background-color: #ff6666;
       color: white; border: none; border-radius: 5px;
       cursor: pointer;
@@ -112,7 +112,7 @@
           cell.dataset.row = r;
           cell.dataset.col = c;
 
-          // En móviles y PC: selección por tap
+          // Selección por tap
           cell.addEventListener("click", () => {
             highlightCell(cell);
           });
@@ -142,16 +142,22 @@
 
     function checkWord() {
       const selectedText = dragCells.map(c => c.textContent).join('');
+      let found = false;
       words.forEach(word => {
-        if (selectedText.includes(word) || selectedText.includes(word.split('').reverse().join(''))) {
+        if (selectedText === word || selectedText === word.split('').reverse().join('')) {
           dragCells.forEach(c => {
             c.classList.remove("highlight");
             c.classList.add("found");
           });
           document.getElementById("word-" + word).style.textDecoration = "line-through";
-          dragCells = []; // limpiar selección
+          found = true;
         }
       });
+      if (!found) {
+        // limpiar selección si no es correcta
+        dragCells.forEach(c => c.classList.remove("highlight"));
+      }
+      dragCells = [];
     }
 
     checkButton.addEventListener("click", () => {
@@ -159,9 +165,9 @@
     });
 
     resetButton.addEventListener("click", () => {
+      dragCells = [];
       createGrid();
       createWordList();
-      dragCells = [];
     });
 
     createGrid();
@@ -169,3 +175,5 @@
   </script>
 </body>
 </html>
+
+ 
